@@ -1,0 +1,11 @@
+Species,m,b,comment
+Copepod,0.0101,1.9552,miligrams and millimetre for length
+Ostracod,0.1738,4.2678,All from OGorman and emmerson 2010
+Foraminifera,0.1598,3.2349,
+Gastropod,0.1532,2.3992,
+Amphipod,0.004,3.095,
+Isopod,0.0101,1.9552,
+Nematode,0.0021,2.395,49-polychaeta
+Mite,0.0101,1.9552,halacarellus basteri 25 -cumacea
+Brittle.star,0.39055,2.7572,mean of ophiothrix fragilis and ophiura ophiura
+Larvae,0.0021,2.395,chironomidae 49-polychaeta

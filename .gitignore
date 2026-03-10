@@ -1,0 +1,19 @@
+# R artifacts
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Generated data outputs (produced by analysis.R at runtime)
+data/final_biomass.csv
+data/mesofauna_biomass_calculated.csv
+data/mesofauna_variance.csv
+data/community_interactions.csv
+data/community_biomass_interactions.csv
+
+# Generated figures (produced by analysis.R at runtime)
+figures/
+
+# OS
+.DS_Store
+Thumbs.db
