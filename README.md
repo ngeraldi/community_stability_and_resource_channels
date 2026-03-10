@@ -46,7 +46,8 @@ This repository contains all R code and data needed to reproduce the statistical
     ├── Figure1_chl_metabolism.pdf
     ├── Figure2_biomass_factors.pdf
     ├── Figure3_mesofauna_community.pdf
-    └── Figure5_RDA_mesofauna.pdf
+    ├── Figure5_RDA_mesofauna.pdf
+    └── FigureS1_species_abundance.pdf
 ```
 
 The `data/` folder also receives several **output files** written by the script during execution:

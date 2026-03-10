@@ -912,6 +912,38 @@ abline(h=0, v=0, lty=3, col="gray80")
 dev.off()
 
 
+# -------------------------------------------------------
+# 8e. Figure S1: Mesofauna species abundance (supplementary)
+# -------------------------------------------------------
+# Mean (± 1 SE) abundance per taxon at the final sampling
+# period (Time = 4), summed across all mesocosms.
+# Species names cleaned (dots replaced with spaces).
+
+sp_ids_clean <- c("Ostracod","Copepod","Gastropod","Foraminifera",
+                  "Isopod","Mite","Brittle star","Amphipod",
+                  "Larvae","Nematode")
+
+sp_means <- colMeans(cc4, na.rm=TRUE)
+sp_se    <- apply(cc4, 2, function(x) sd(x, na.rm=TRUE) / sqrt(sum(!is.na(x))))
+sp_ord   <- order(sp_means, decreasing=TRUE)  # sort by mean abundance
+
+pdf(file.path(fig_dir, "FigureS1_species_abundance.pdf"), width=7, height=5)
+par(mar=c(7, 4.5, 1, 1))
+bp <- barplot(sp_means[sp_ord],
+              names.arg = sp_ids_clean[sp_ord],
+              las      = 2,
+              col      = "gray70",
+              border   = "gray30",
+              ylab     = "Mean abundance (individuals per scrubber)",
+              ylim     = c(0, max(sp_means + sp_se * 1.5, na.rm=TRUE)),
+              cex.names = 0.85,
+              cex.axis  = 0.85)
+arrows(bp, sp_means[sp_ord] + sp_se[sp_ord],
+       bp, sp_means[sp_ord] - sp_se[sp_ord],
+       angle=90, code=3, length=0.05, col="gray20", lwd=1.2)
+dev.off()
+
+
 # ============================================================
 # END OF SCRIPT
 # ============================================================
