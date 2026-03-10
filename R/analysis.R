@@ -1,26 +1,35 @@
 # ============================================================
-# Trophic complexity and ecosystem stability in marine mesocosms
+# Community stability is enhanced through distinct resource
+# channels and higher order consumers
 # Combined Analysis Script
 # ============================================================
 #
-# Authors: [Author names]
-# Manuscript: [Journal, Year]
+# Authors: Geraldi N.R., Barrios-O'Neill D., Kregting L.,
+#          Anton A., Hunter W., Shiels F., O'Connor N.E.,
+#          Emmerson M.C.
+# Affiliations: Queen's University Marine Laboratory /
+#               School of Biological Sciences, QUB, Belfast, UK
+# Corresponding: nathan.geraldi@kaust.edu.sa
+# Manuscript: [Journal, Year, DOI]
 #
 # Description:
 #   This script reproduces all statistical analyses and figures
-#   in the manuscript. Data are read from ../data/. Figures are
-#   written to ../figures/.
+#   reported in the manuscript. Data are read from ../data/.
+#   Figures are written to ../figures/.
 #
 # Experiment overview:
-#   Fully-crossed mesocosm factorial experiment (n=144 buckets)
-#   testing effects of four biotic factors on ecosystem structure
-#   and stability: Crab (predator), Amphipods (grazers),
-#   Ulva (macroalgae), and Kelp (structure/productivity).
-#   Response variables include benthic chlorophyll, oxygen
-#   metabolism (GPP, NCP, Respiration), nutrient concentrations,
-#   organism biomass, and mesofauna community composition on
-#   artificial pot-scrubber substrates. Temporal stability is
-#   measured as the variance of detrended time series per bucket.
+#   Fully-crossed mesocosm factorial experiment (n=144 buckets,
+#   39 days) testing effects of four biotic factors on ecosystem
+#   structure, functioning and temporal stability:
+#     Crab    - predator (absent / present)
+#     Pods    - amphipods, mesograzers (absent / present)
+#     Ulva    - fast-growing macroalgae (absent / present)
+#     Kelp    - detrital kelp (absent / intact / ground)
+#   Response variables: benthic chlorophyll (BenthoTorch),
+#   oxygen metabolism (NCP, GPP), organism biomass (crab,
+#   amphipods, Ulva, kelp, detritus), and mesofauna community
+#   on pot-scrubber substrates. Temporal stability = detrended
+#   variance across the 4 sampling periods per bucket.
 #
 # Script sections:
 #   1.  Setup (libraries, paths)
@@ -31,18 +40,18 @@
 #   6.  Temporal variance calculations
 #   7.  Statistical analyses
 #       7a. Benthic chlorophyll (BenthoTorch)
-#       7b. Algae cover (Ectocarpus)
-#       7c. Organism biomass (crab, amphipods, Ulva, kelp, detritus)
-#       7d. Nutrients (nitrate, ammonium, phosphate)
-#       7e. Oxygen metabolism (NCP, GPP, Respiration)
-#       7f. Mesofauna community (pot scrubber)
+#       7b. Organism biomass (crab, amphipods, Ulva, kelp, detritus)
+#       7c. Oxygen metabolism (NCP, GPP)
+#       7d. Mesofauna community (pot scrubber)
 #   8.  Figures
 #       8a. Figure 1: Benthic chlorophyll & metabolism vs. treatments
 #       8b. Figure 2: Organism biomass vs. treatments
 #       8c. Figure 3: Mesofauna community vs. treatments
+#       8d. Figure 5: RDA of mesofauna community
 #
 # To run: set your working directory to the R/ folder, or use
 #   the RStudio 'Source' button, before running.
+#   Call sessionInfo() at end for R/package version record.
 # ============================================================
 
 
@@ -141,15 +150,6 @@ dry    <- read.table(file.path(data_dir, "dry_weights.csv"),
 benth_raw <- read.table(file.path(data_dir, "benthic_chl_all.csv"),
                         header=T, sep=',')
 
-# --- Algae ---
-algae  <- read.table(file.path(data_dir, "algae_cover.csv"),
-                     header=T, sep=',')
-
-# --- Nutrients ---
-nut1   <- read.table(file.path(data_dir, "nutrients.csv"),
-                     header=T, sep=',')
-nutfin <- read.table(file.path(data_dir, "nitrate_initial_final.csv"),
-                     header=T, sep=',')
 
 # --- Oxygen metabolism (raw incubation data) ---
 oxy    <- read.table(file.path(data_dir, "oxygen_metabolism.csv"),
@@ -248,11 +248,6 @@ detdry   <- join(dat1, det, type="left", by="Overall.bucket")
 cdry     <- dry[dry$Type == "crab", ]
 cdry     <- cdry[order(cdry$Overall.bucket), ]; rownames(cdry) <- NULL
 cd1      <- cdry[, c(2, 7)]; names(cd1)[2] <- "biomass_dry"
-
-# --- Nitrate (initial vs. final) ---
-names(nutfin)[1] <- "Overall.bucket"
-nutfin   <- join(dat1, nutfin, type="left", by="Overall.bucket")
-
 
 # ============================================================
 # SECTION 5: BIOMASS CALCULATIONS
@@ -483,23 +478,7 @@ Anova(m_bv)
 
 
 # -------------------------------------------------------
-# 7b. Algae cover (Ectocarpus)
-# -------------------------------------------------------
-
-alg1      <- join(algae, Flow, type="left", by="Overall.bucket")
-alg1$resp <- alg1$Ectocarpus.cover
-mod_alg   <- lm(resp + 1 ~ Crab*Pods*Ulva*Kelp, data=alg1)
-bc_alg    <- boxcox(mod_alg, plotit=FALSE)
-mm_alg    <- bc_alg$x[which.max(bc_alg$y)]
-m_alg     <- lmer(sqrt(resp) ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                    (1 | Table),
-                  dat=alg1)
-summary(m_alg)
-Anova(m_alg)
-
-
-# -------------------------------------------------------
-# 7c. Organism biomass
+# 7b. Organism biomass
 # -------------------------------------------------------
 
 # -- Crab proportional biomass change ---
@@ -559,41 +538,7 @@ Anova(m_det)
 
 
 # -------------------------------------------------------
-# 7d. Nutrients
-# -------------------------------------------------------
-
-nut1     <- nut1[1:144, 1:11]
-nut1$Kelp<- factor(nut1$Kelp, levels=c("No","One piece","Ground up"))
-nut1$Crab<- factor(nut1$Crab)
-nut1$Pods<- factor(nut1$Pods)
-nut1$Ulva<- factor(nut1$Ulva)
-
-# Nitrate (log-normal)
-m_no3  <- lm(log(Nitrate) ~ Crab + Pods + Ulva + Kelp, dat=nut1)
-summary(m_no3); anova(m_no3)
-
-# Ammonium
-m_nh4  <- lm(log(Ammonium + 1) ~ Crab + Pods + Ulva + Kelp, dat=nut1)
-summary(m_nh4); anova(m_nh4)
-
-# Phosphate (log-normal)
-m_po4  <- lm(log(Phosphate) ~ Crab + Pods + Ulva + Kelp, dat=nut1)
-summary(m_po4); anova(m_po4)
-
-# Nitrate final concentration
-nutfin$resp <- nutfin$Final
-mod_nf      <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=nutfin)
-bc_nf       <- boxcox(mod_nf, plotit=FALSE)
-mm_nf       <- bc_nf$x[which.max(bc_nf$y)]
-m_nitfin    <- lmer((resp)^mm_nf ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                      (1 | Table),
-                    dat=nutfin)
-summary(m_nitfin)
-Anova(m_nitfin)
-
-
-# -------------------------------------------------------
-# 7e. Oxygen metabolism (NCP, GPP, Respiration)
+# 7c. Oxygen metabolism (NCP, GPP)
 # -------------------------------------------------------
 
 # Final sampling period
@@ -614,14 +559,6 @@ m_gpp   <- lmer(resp ~ Crab + Pods + Ulva + Kelp + flowpermin +
                 dat=oo, REML=F)
 summary(m_gpp)
 Anova(m_gpp)
-
-# -- Respiration ---
-oo$resp <- oo$Resp
-m_resp  <- lmer(resp ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table),
-                dat=oo, REML=F)
-summary(m_resp)
-Anova(m_resp)
 
 # -- NCP temporal variance ---
 oxvar_ncp      <- ncpvar
@@ -649,7 +586,7 @@ Anova(m_gppvar)
 
 
 # -------------------------------------------------------
-# 7f. Mesofauna community (pot scrubber)
+# 7d. Mesofauna community (pot scrubber)
 # -------------------------------------------------------
 
 # Subset to final time point for cross-sectional analyses
@@ -732,7 +669,6 @@ print(mod_sum)
 benth4   <- benth[benth$sample == 4, ]
 oxy4     <- oxysimp[oxysimp$Sample == 4, ]
 all_fig1 <- cbind(dat1,
-                  nut1[1:144, c(8, 11, 10)],
                   benth4$Total.Conc.,
                   benthvar$bentvar,
                   oxy4$NCP,
@@ -802,21 +738,17 @@ dev.off()
 # kelp biomass, detritus biomass. Columns: treatments + flow.
 
 ul     <- ulvadry[, c(3, 17)]
-alg4   <- algae[algae$Sample == 1, ]
 c2     <- c1[, c(1, 28)]; names(c2)[1] <- "Overall.bucket"
 pod4   <- amphdry[, c(3, 17)];  names(pod4)[2] <- "podbio"
 kelp4  <- kelpdry[, c(3, 17)];  names(kelp4)[2] <- "kelpbio"
 det4   <- detdry[, c(3, 17)];   names(det4)[2]  <- "detbio"
 
-all_fig2 <- cbind(dat1, nut1[1:144, c(8, 11, 10)])
+all_fig2 <- dat1
 all_fig2 <- join(all_fig2, c2,    type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, pod4,  type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, ul,    type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, kelp4, type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, det4,  type="left", by="Overall.bucket")
-all_fig2 <- cbind(all_fig2, alg4$Ectocarpus.cover)
-names(all_fig2)[20] <- "Ecto"
-all_fig2$Ecto <- all_fig2$Ecto / 1000
 # Set biomass to zero where organism was absent (was NA)
 all_fig2[all_fig2$Crab == "No", 15] <- 0
 all_fig2[all_fig2$Pods == "No", 16] <- 0
@@ -860,8 +792,8 @@ for (i in 15:19) {
       plot(all_fig2[,j], all_fig2[,i], pch=1, cex=.6, ylab="", xlab="",
            xaxt="n", yaxt="n", bty='l', xlim=c(150,900), ylim=y)
       axis(2, labels=F)
-      if (i == 20) axis(1, las=1, tick=F, padj=-1)
-      if (j==8 & i==20) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)
+      if (i == 19) axis(1, las=1, tick=F, padj=-1)
+      if (j==8 & i==15) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)
     }
   }
 }
@@ -954,7 +886,34 @@ mtext(expression(paste("Water input (ml*min"^{-1},")")), 1, las=0, line=1.2, cex
 dev.off()
 
 
+# -------------------------------------------------------
+# 8d. Figure 5: RDA ordination biplot (mesofauna community)
+# -------------------------------------------------------
+# Constrained ordination of log-transformed species matrix
+# against experimental treatments and water flow.
+# Species scores scaled to correlation (scaling=2).
+
+pdf(file.path(fig_dir, "Figure5_RDA_mesofauna.pdf"), width=7, height=7)
+par(mar=c(4, 4, 1, 1))
+plot(mod_rda, scaling=2, type="n",
+     xlab=paste0("RDA1 (", round(summary(mod_rda)$concont$importance[2,1]*100, 1), "%)"),
+     ylab=paste0("RDA2 (", round(summary(mod_rda)$concont$importance[2,2]*100, 1), "%)"))
+# Points (sites)
+points(mod_rda, display="sites", pch=1, col="gray60", cex=0.8)
+# Species scores
+text(mod_rda, display="species", scaling=2, col="black", cex=0.75)
+# Biplot arrows (constraints)
+text(mod_rda, display="bp", scaling=2, col="#0057A8", cex=0.85, font=2)
+arrows(0, 0,
+       scores(mod_rda, display="bp", scaling=2)[, 1] * 0.85,
+       scores(mod_rda, display="bp", scaling=2)[, 2] * 0.85,
+       length=0.1, col="#0057A8")
+abline(h=0, v=0, lty=3, col="gray80")
+dev.off()
+
+
 # ============================================================
 # END OF SCRIPT
 # ============================================================
+sessionInfo()
 message("Analysis complete. Figures saved to: ", normalizePath(fig_dir))
