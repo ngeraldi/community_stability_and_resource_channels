@@ -259,7 +259,7 @@ crabstay          <- crabstay[-c(3, 16, 19, 47), ]       # remove incomplete rec
 c1                <- merge(crabstay, dat1, by.x="bucket",
                            by.y="Overall.bucket", all.x=T, sort=F)
 c1$changebiomass  <- c1$weightfin - c1$weight
-c1$pbio           <- c1$weightfin - c1$weight / c1$weight  # proportional change
+c1$pbio           <- (c1$weightfin - c1$weight) / c1$weight  # proportional change
 names(c1)[1]      <- "Overall.bucket"
 
 # --- Dry:wet conversion factors ---
@@ -430,7 +430,7 @@ psdivvar  <- cbind(dat1, calc_temporal_variance(dd_div))
 varg          <- cbind(psvar, psbiovar[, 12], psrichvar[, 12], psdivvar[, 12])
 colnames(varg)[12:15] <- c("abund", "biomass", "rich", "div")
 write.table(varg, file.path(data_dir, "mesofauna_variance.csv"),
-            col.names=T, sep=",")
+            row.names=F, col.names=T, sep=",")
 
 
 # ============================================================
@@ -793,7 +793,7 @@ for (i in 15:19) {
            xaxt="n", yaxt="n", bty='l', xlim=c(150,900), ylim=y)
       axis(2, labels=F)
       if (i == 19) axis(1, las=1, tick=F, padj=-1)
-      if (j==8 & i==15) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)
+      if (j==8 & i==17) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)  # Ulva vs flow
     }
   }
 }
