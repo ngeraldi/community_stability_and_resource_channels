@@ -135,14 +135,11 @@ pod    <- read.table(file.path(data_dir, "amphipod_counts.csv"),
 dry    <- read.table(file.path(data_dir, "dry_weights.csv"),
                      header=T, sep=',')
 
-# --- Benthic chlorophyll (BenthoTorch fluorometry, 4 sampling periods) ---
-# Sample 1 is embedded in experiment_design.csv (columns 16-19, 24)
-ben2   <- read.table(file.path(data_dir, "benthic_chl_sample2.csv"),
-                     header=T, sep=',')
-ben3   <- read.table(file.path(data_dir, "benthic_chl_sample3.csv"),
-                     header=T, sep=',')
-ben4   <- read.table(file.path(data_dir, "benthic_chl_sample4.csv"),
-                     header=T, sep=',')
+# --- Benthic chlorophyll (BenthoTorch fluorometry, all 4 sampling periods) ---
+# Combined file: Overall.bucket, sample (1-4), Cyano, Green.Algae,
+#                Diatoms, Total.Conc., Reflection
+benth_raw <- read.table(file.path(data_dir, "benthic_chl_all.csv"),
+                        header=T, sep=',')
 
 # --- Algae ---
 algae  <- read.table(file.path(data_dir, "algae_cover.csv"),
@@ -212,12 +209,9 @@ names(oxysimp)[c(16, 25, 5, 6, 7, 8)] <- c("NCP", "Resp", "Ulva", "Pods", "Crab"
 oxysimp$Kelp <- factor(oxysimp$Kelp, levels=c("No", "One piece", "Ground up"))
 oxysimp      <- join(oxysimp, dat1, type="left", by="Overall.bucket")
 
-# --- Benthic chlorophyll: combine 4 sampling periods into one data frame ---
-ben        <- dat[, c(1:7, 16:19, 24)]; ben$sample <- 1
-ben2       <- cbind(dat[, 1:7], ben2[, 4:8]);       ben2$sample <- 2
-ben3       <- cbind(dat[, 1:7], ben3[, 3:7]);       ben3$sample <- 3
-ben4       <- cbind(dat[, 1:7], ben4[, 3:7]);       ben4$sample <- 4
-benth      <- rbind(ben, ben2, ben3, ben4)
+# --- Benthic chlorophyll: merge combined file with experimental design ---
+# benth_raw has Overall.bucket, sample (1-4), and pigment columns
+benth      <- join(benth_raw, dat1, type="left", by="Overall.bucket")
 benth$Cyano       <- as.numeric(benth$Cyano)
 benth$Green.Algae <- as.numeric(benth$Green.Algae)
 benth$Diatoms     <- as.numeric(benth$Diatoms)

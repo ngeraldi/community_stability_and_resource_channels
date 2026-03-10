@@ -37,9 +37,7 @@ This repository contains all R code and data needed to reproduce the statistical
 │   ├── oxygen_metabolism.csv
 │   ├── nutrients.csv
 │   ├── nitrate_initial_final.csv
-│   ├── benthic_chl_sample2.csv
-│   ├── benthic_chl_sample3.csv
-│   ├── benthic_chl_sample4.csv
+│   ├── benthic_chl_all.csv
 │   ├── dry_weights.csv
 │   ├── crab_weights.csv
 │   ├── amphipod_counts.csv
@@ -92,9 +90,7 @@ Figures will be saved as PDF files in the `figures/` directory.
 | `oxygen_metabolism.csv` | Raw dissolved oxygen readings from light and dark incubations across all 4 sampling periods |
 | `nutrients.csv` | Dissolved nitrate, ammonium, and phosphate concentrations per mesocosm |
 | `nitrate_initial_final.csv` | Nitrate concentrations at experiment start and end |
-| `benthic_chl_sample2.csv` | BenthoTorch pigment readings at sampling period 2 |
-| `benthic_chl_sample3.csv` | BenthoTorch pigment readings at sampling period 3 |
-| `benthic_chl_sample4.csv` | BenthoTorch pigment readings at sampling period 4 |
+| `benthic_chl_all.csv` | BenthoTorch pigment readings at all 4 sampling periods. Columns: Overall.bucket, sample (1–4), Cyano, Green.Algae, Diatoms, Total.Conc., Reflection |
 | `dry_weights.csv` | Dry weight biomass for all organism types (Ulva, amphipods, kelp, detritus, crab) |
 | `crab_weights.csv` | Crab wet weights at start and end of experiment |
 | `amphipod_counts.csv` | Amphipod counts and size measurements |
