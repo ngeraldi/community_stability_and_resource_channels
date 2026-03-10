@@ -915,32 +915,39 @@ dev.off()
 # -------------------------------------------------------
 # 8e. Figure S1: Mesofauna species abundance (supplementary)
 # -------------------------------------------------------
-# Mean (± 1 SE) abundance per taxon at the final sampling
-# period (Time = 4), summed across all mesocosms.
-# Species names cleaned (dots replaced with spaces).
+# Horizontal boxplots of abundance per taxon at final
+# sampling period (Time = 4). Species sorted by median
+# abundance (highest at top). X-axis on log(y + 1) scale
+# with original abundance values as labels.
 
 sp_ids_clean <- c("Ostracod","Copepod","Gastropod","Foraminifera",
                   "Isopod","Mite","Brittle star","Amphipod",
                   "Larvae","Nematode")
 
-sp_means <- colMeans(cc4, na.rm=TRUE)
-sp_se    <- apply(cc4, 2, function(x) sd(x, na.rm=TRUE) / sqrt(sum(!is.na(x))))
-sp_ord   <- order(sp_means, decreasing=TRUE)  # sort by mean abundance
+# Order species by median ascending (lowest = bottom of horizontal plot)
+sp_medians <- apply(cc4, 2, median, na.rm=TRUE)
+sp_ord     <- order(sp_medians, decreasing=FALSE)
+
+# Log(y + 1) transform; axis labels shown as original values
+cc4_log   <- log(cc4 + 1)
+axis_vals <- c(0, 3, 14, 55, 214, 821)
+axis_at   <- log(axis_vals + 1)
 
 pdf(file.path(fig_dir, "FigureS1_species_abundance.pdf"), width=7, height=5)
-par(mar=c(7, 4.5, 1, 1))
-bp <- barplot(sp_means[sp_ord],
-              names.arg = sp_ids_clean[sp_ord],
-              las      = 2,
-              col      = "gray70",
-              border   = "gray30",
-              ylab     = "Mean abundance (individuals per scrubber)",
-              ylim     = c(0, max(sp_means + sp_se * 1.5, na.rm=TRUE)),
-              cex.names = 0.85,
-              cex.axis  = 0.85)
-arrows(bp, sp_means[sp_ord] + sp_se[sp_ord],
-       bp, sp_means[sp_ord] - sp_se[sp_ord],
-       angle=90, code=3, length=0.05, col="gray20", lwd=1.2)
+par(mar=c(5, 7, 1, 1))
+boxplot(cc4_log[, sp_ord],
+        horizontal = TRUE,
+        las        = 1,
+        names      = sp_ids_clean[sp_ord],
+        outline    = TRUE,
+        col        = "white",
+        border     = "gray20",
+        xaxt       = "n",
+        xlab       = "",
+        cex.axis   = 0.85)
+axis(1, at=axis_at, labels=axis_vals, cex.axis=0.85)
+mtext(expression(paste("Abundances  [", log(frac(y, min)+1), "  scale]")),
+      side=1, line=3.5, cex=0.9)
 dev.off()
 
 
