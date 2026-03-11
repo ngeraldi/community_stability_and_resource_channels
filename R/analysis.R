@@ -446,8 +446,13 @@ write.table(varg, file.path(data_dir, "mesofauna_variance.csv"),
 #     The +1 offset before boxcox() ensures positivity when data contain zeros.
 #   - Mixed models (lme4::lmer): fixed effects = treatments + water flow rate;
 #     random effect = (1 | Table) accounting for the 6 spatial blocking tables.
-#   - REML=FALSE when comparing models by AIC; REML=TRUE (default) for final
-#     parameter estimates and inference (car::Anova Type II Wald chi-square).
+#   - Model selection (MuMIn::dredge): all main effects are always retained
+#     (fixed=); only 2-way interactions compete for inclusion. The best model
+#     minimises AIC. Main effects are reported regardless of significance, as
+#     appropriate for a designed factorial experiment.
+#   - REML=FALSE for global model (required for valid AIC comparison);
+#     REML=TRUE when refitting the best model for final inference.
+#   - Inference: car::Anova Type II Wald chi-square tests on the best model.
 #
 # -------------------------------------------------------
 # 7a. Benthic chlorophyll (BenthoTorch: Total Concentration)
@@ -460,10 +465,14 @@ mod_benth <- lm(Total.Conc. + 1 ~ Crab*Pods*Ulva*Kelp, data=benth_clean)
 bc_benth  <- boxcox(mod_benth, plotit=FALSE)
 mm_benth  <- bc_benth$x[which.max(bc_benth$y)]
 
-# Best model: main effects + flow + random slope for sample period over table
-m_benth <- lmer((Total.Conc. + 1)^mm_benth ~ Crab + Pods + Ulva + Kelp +
-                  flowpermin + Crab:flowpermin + (sample | Table),
-                dat=benth_clean)
+m_benth_global <- lmer((Total.Conc. + 1)^mm_benth ~
+                         (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                         (sample | Table),
+                       REML=F, dat=benth_clean, na.action=na.fail)
+benth_aic <- MuMIn::dredge(m_benth_global, rank="AIC",
+                            fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(benth_aic)
+m_benth <- update(MuMIn::get.models(benth_aic, 1)[[1]], REML=TRUE)
 summary(m_benth)
 Anova(m_benth)
 
@@ -472,9 +481,14 @@ b4      <- benth_clean[benth_clean$sample == 4, ]
 mod_b4  <- lm(Total.Conc. ~ Crab*Pods*Ulva*Kelp, data=b4)
 bc_b4   <- boxcox(mod_b4, plotit=FALSE)
 mm_b4   <- bc_b4$x[which.max(bc_b4$y)]
-m_benth4<- lmer((Total.Conc.)^mm_b4 ~ Crab + Pods + Ulva + Kelp +
-                  flowpermin + (1 | Table),
-                dat=b4)
+m_b4_global <- lmer((Total.Conc.)^mm_b4 ~
+                      (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                      (1 | Table),
+                    REML=F, dat=b4, na.action=na.fail)
+b4_aic <- MuMIn::dredge(m_b4_global, rank="AIC",
+                         fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(b4_aic)
+m_benth4 <- update(MuMIn::get.models(b4_aic, 1)[[1]], REML=TRUE)
 summary(m_benth4)
 Anova(m_benth4)
 
@@ -482,9 +496,14 @@ Anova(m_benth4)
 mod_bv  <- lm(bentvar ~ Crab*Pods*Ulva*Kelp, data=benthvar)
 bc_bv   <- boxcox(mod_bv, plotit=FALSE)
 mm_bv   <- bc_bv$x[which.max(bc_bv$y)]
-m_bv    <- lmer((bentvar)^mm_bv ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table),
-                dat=benthvar)
+m_bv_global <- lmer((bentvar)^mm_bv ~
+                      (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                      (1 | Table),
+                    REML=F, dat=benthvar, na.action=na.fail)
+bv_aic <- MuMIn::dredge(m_bv_global, rank="AIC",
+                         fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(bv_aic)
+m_bv <- update(MuMIn::get.models(bv_aic, 1)[[1]], REML=TRUE)
 summary(m_bv)
 Anova(m_bv)
 
@@ -519,9 +538,14 @@ ulvadry$resp <- ulvadry$biomass
 mod_u        <- lm(resp + 1 ~ Crab*Pods*Kelp, data=ulvadry)
 bc_u         <- boxcox(mod_u, plotit=FALSE)
 mm_u         <- bc_u$x[which.max(bc_u$y)]
-m_ulva       <- lmer((resp)^mm_u ~ Crab + Pods + Kelp + flowpermin +
-                       (1 | Table),
-                     REML=F, dat=ulvadry)
+m_ulva_global <- lmer((resp)^mm_u ~
+                        (Crab + Pods + Kelp + flowpermin)^2 +
+                        (1 | Table),
+                      REML=F, dat=ulvadry, na.action=na.fail)
+ulva_aic <- MuMIn::dredge(m_ulva_global, rank="AIC",
+                           fixed=c("Crab","Pods","Kelp","flowpermin"))
+print(ulva_aic)
+m_ulva <- update(MuMIn::get.models(ulva_aic, 1)[[1]], REML=TRUE)
 summary(m_ulva)
 Anova(m_ulva)
 
@@ -530,9 +554,14 @@ amphdry$resp <- amphdry$biomass
 mod_a        <- lm(resp ~ Crab*Ulva*Kelp, data=amphdry)
 bc_a         <- boxcox(mod_a, plotit=FALSE)
 mm_a         <- bc_a$x[which.max(bc_a$y)]
-m_amph       <- lmer((resp)^mm_a ~ Crab + Ulva + Kelp + flowpermin +
-                       (1 | Table),
-                     REML=F, dat=amphdry)
+m_amph_global <- lmer((resp)^mm_a ~
+                        (Crab + Ulva + Kelp + flowpermin)^2 +
+                        (1 | Table),
+                      REML=F, dat=amphdry, na.action=na.fail)
+amph_aic <- MuMIn::dredge(m_amph_global, rank="AIC",
+                           fixed=c("Crab","Ulva","Kelp","flowpermin"))
+print(amph_aic)
+m_amph <- update(MuMIn::get.models(amph_aic, 1)[[1]], REML=TRUE)
 summary(m_amph)
 Anova(m_amph)
 
@@ -541,9 +570,14 @@ kelpdry$resp <- kelpdry$biomass + 1
 mod_k        <- lm(resp ~ Crab*Pods*Ulva, data=kelpdry)
 bc_k         <- boxcox(mod_k, plotit=FALSE)
 mm_k         <- bc_k$x[which.max(bc_k$y)]
-m_kelp       <- lmer((resp)^mm_k ~ Crab + Pods + Ulva + flowpermin +
-                       (1 | Table),
-                     dat=kelpdry)
+m_kelp_global <- lmer((resp)^mm_k ~
+                        (Crab + Pods + Ulva + flowpermin)^2 +
+                        (1 | Table),
+                      REML=F, dat=kelpdry, na.action=na.fail)
+kelp_aic <- MuMIn::dredge(m_kelp_global, rank="AIC",
+                           fixed=c("Crab","Pods","Ulva","flowpermin"))
+print(kelp_aic)
+m_kelp <- update(MuMIn::get.models(kelp_aic, 1)[[1]], REML=TRUE)
 summary(m_kelp)
 Anova(m_kelp)
 
@@ -552,9 +586,14 @@ detdry$resp  <- detdry$biomass + 1
 mod_d        <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=detdry)
 bc_d         <- boxcox(mod_d, plotit=FALSE)
 mm_d         <- bc_d$x[which.max(bc_d$y)]
-m_det        <- lmer((resp)^mm_d ~ Crab + Pods + Ulva + Kelp + flowpermin +
+m_det_global <- lmer((resp)^mm_d ~
+                       (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
                        (1 | Table),
-                     dat=detdry)
+                     REML=F, dat=detdry, na.action=na.fail)
+det_aic <- MuMIn::dredge(m_det_global, rank="AIC",
+                          fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(det_aic)
+m_det <- update(MuMIn::get.models(det_aic, 1)[[1]], REML=TRUE)
 summary(m_det)
 Anova(m_det)
 
@@ -568,17 +607,25 @@ oo      <- oxysimp[oxysimp$Sample == 4, ]
 
 # -- Net Community Production (NCP) ---
 oo$resp <- oo$NCP
-m_ncp   <- lmer(resp ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table),
-                dat=oo, REML=F)
+m_ncp_global <- lmer(resp ~ (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                       (1 | Table),
+                     REML=F, dat=oo, na.action=na.fail)
+ncp_aic <- MuMIn::dredge(m_ncp_global, rank="AIC",
+                          fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(ncp_aic)
+m_ncp <- update(MuMIn::get.models(ncp_aic, 1)[[1]], REML=TRUE)
 summary(m_ncp)
 Anova(m_ncp)
 
 # -- Gross Primary Production (GPP) ---
 oo$resp <- oo$GPP
-m_gpp   <- lmer(resp ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table / Column),
-                dat=oo, REML=F)
+m_gpp_global <- lmer(resp ~ (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                       (1 | Table / Column),
+                     REML=F, dat=oo, na.action=na.fail)
+gpp_aic <- MuMIn::dredge(m_gpp_global, rank="AIC",
+                          fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(gpp_aic)
+m_gpp <- update(MuMIn::get.models(gpp_aic, 1)[[1]], REML=TRUE)
 summary(m_gpp)
 Anova(m_gpp)
 
@@ -588,9 +635,14 @@ oxvar_ncp$resp <- oxvar_ncp$ncpvar
 mod_ov         <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=oxvar_ncp)
 bc_ov          <- boxcox(mod_ov, plotit=FALSE)
 mm_ov          <- bc_ov$x[which.max(bc_ov$y)]
-m_ncpvar       <- lmer((resp)^mm_ov ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                         (1 | Table),
-                       dat=oxvar_ncp)
+m_ncpvar_global <- lmer((resp)^mm_ov ~
+                          (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                          (1 | Table),
+                        REML=F, dat=oxvar_ncp, na.action=na.fail)
+ncpvar_aic <- MuMIn::dredge(m_ncpvar_global, rank="AIC",
+                             fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(ncpvar_aic)
+m_ncpvar <- update(MuMIn::get.models(ncpvar_aic, 1)[[1]], REML=TRUE)
 summary(m_ncpvar)
 Anova(m_ncpvar)
 
@@ -600,9 +652,14 @@ oxvar_gpp$resp <- oxvar_gpp$gppvar
 mod_gv         <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=oxvar_gpp)
 bc_gv          <- boxcox(mod_gv, plotit=FALSE)
 mm_gv          <- bc_gv$x[which.max(bc_gv$y)]
-m_gppvar       <- lmer((resp)^mm_gv ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                         (1 | Table),
-                       dat=oxvar_gpp)
+m_gppvar_global <- lmer((resp)^mm_gv ~
+                          (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                          (1 | Table),
+                        REML=F, dat=oxvar_gpp, na.action=na.fail)
+gppvar_aic <- MuMIn::dredge(m_gppvar_global, rank="AIC",
+                             fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(gppvar_aic)
+m_gppvar <- update(MuMIn::get.models(gppvar_aic, 1)[[1]], REML=TRUE)
 summary(m_gppvar)
 Anova(m_gppvar)
 
@@ -643,25 +700,40 @@ rr$resp   <- rr$total_abund
 mod_ps    <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr)
 bc_ps   <- boxcox(mod_ps, plotit=FALSE)
 mm_ps   <- bc_ps$x[which.max(bc_ps$y)]
-m_psab  <- lmer((resp)^mm_ps ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table.x),
-                REML=F, dat=rr)
+m_psab_global <- lmer((resp)^mm_ps ~
+                        (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                        (1 | Table.x),
+                      REML=F, dat=rr, na.action=na.fail)
+psab_aic <- MuMIn::dredge(m_psab_global, rank="AIC",
+                           fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(psab_aic)
+m_psab <- update(MuMIn::get.models(psab_aic, 1)[[1]], REML=TRUE)
 summary(m_psab)
 Anova(m_psab)
 
 # -- Univariate: richness at final time point ---
 rr$resp  <- rr$rich
-m_psrich <- lmer((resp)^mm_ps ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                   (1 | Table.x),
-                 REML=F, dat=rr)
+m_psrich_global <- lmer((resp)^mm_ps ~
+                          (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                          (1 | Table.x),
+                        REML=F, dat=rr, na.action=na.fail)
+psrich_aic <- MuMIn::dredge(m_psrich_global, rank="AIC",
+                             fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(psrich_aic)
+m_psrich <- update(MuMIn::get.models(psrich_aic, 1)[[1]], REML=TRUE)
 summary(m_psrich)
 Anova(m_psrich)
 
 # -- Univariate: diversity at final time point ---
 rr$resp  <- rr$diversity
-m_psdiv  <- lmer((resp)^mm_ps ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                   (1 | Table.x),
-                 REML=F, dat=rr)
+m_psdiv_global <- lmer((resp)^mm_ps ~
+                         (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                         (1 | Table.x),
+                       REML=F, dat=rr, na.action=na.fail)
+psdiv_aic <- MuMIn::dredge(m_psdiv_global, rank="AIC",
+                            fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(psdiv_aic)
+m_psdiv <- update(MuMIn::get.models(psdiv_aic, 1)[[1]], REML=TRUE)
 summary(m_psdiv)
 Anova(m_psdiv)
 
@@ -671,9 +743,14 @@ rr_var$resp <- rr_var$Temp_variances
 mod_pv      <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr_var)
 bc_pv       <- boxcox(mod_pv, plotit=FALSE)
 mm_pv       <- bc_pv$x[which.max(bc_pv$y)]
-m_psdivvar  <- lmer((resp)^mm_pv ~ Crab + Pods + Ulva + Kelp + flowpermin +
-                      (1 | Table),
-                    REML=F, dat=rr_var)
+m_psdivvar_global <- lmer((resp)^mm_pv ~
+                            (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
+                            (1 | Table),
+                          REML=F, dat=rr_var, na.action=na.fail)
+psdivvar_aic <- MuMIn::dredge(m_psdivvar_global, rank="AIC",
+                               fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
+print(psdivvar_aic)
+m_psdivvar <- update(MuMIn::get.models(psdivvar_aic, 1)[[1]], REML=TRUE)
 summary(m_psdivvar)
 Anova(m_psdivvar)
 
