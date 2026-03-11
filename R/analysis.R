@@ -712,12 +712,15 @@ summary(m_psab)
 Anova(m_psab)
 
 # -- Univariate: richness at final time point ---
-rr$resp  <- rr$rich
-m_psrich_global <- lmer((resp)^mm_ps ~
+rr$resp   <- rr$rich
+mod_rich  <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr)
+bc_rich   <- boxcox(mod_rich, plotit=FALSE)
+mm_rich   <- bc_rich$x[which.max(bc_rich$y)]
+m_psrich_global <- lmer((resp)^mm_rich ~
                           (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
                           (1 | Table.x),
                         REML=F, dat=rr, na.action=na.fail)
-psrich_aic <- MuMIn::dredge(m_psrich_global, rank="AIC",
+psrich_aic  <- MuMIn::dredge(m_psrich_global, rank="AIC",
                              fixed=c("Crab","Pods","Ulva","Kelp","flowpermin"))
 print(psrich_aic)
 m_psrich <- update(MuMIn::get.models(psrich_aic, 1)[[1]], REML=TRUE)
@@ -725,8 +728,11 @@ summary(m_psrich)
 Anova(m_psrich)
 
 # -- Univariate: diversity at final time point ---
-rr$resp  <- rr$diversity
-m_psdiv_global <- lmer((resp)^mm_ps ~
+rr$resp   <- rr$diversity
+mod_div   <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr)
+bc_div    <- boxcox(mod_div, plotit=FALSE)
+mm_div    <- bc_div$x[which.max(bc_div$y)]
+m_psdiv_global <- lmer((resp)^mm_div ~
                          (Crab + Pods + Ulva + Kelp + flowpermin)^2 +
                          (1 | Table.x),
                        REML=F, dat=rr, na.action=na.fail)
