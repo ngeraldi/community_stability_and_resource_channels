@@ -895,6 +895,11 @@ dev.off()
 # Constrained ordination of log-transformed species matrix
 # against experimental treatments and water flow.
 # Species scores scaled to correlation (scaling=2).
+# Note: requires mod_rda from Section 7d. If running figures
+# independently, re-run Section 7d first, or uncomment below:
+# t4 <- na.omit(ps_full[ps_full$Time == 4, ]); cc4 <- t4[, 9:18]
+# var4 <- t4[, c(4, 20:26)]
+# mod_rda <- rda(log(cc4 + 1) ~ Crab + Pods + Ulva + Kelp + flowpermin, var4)
 
 pdf(file.path(fig_dir, "Figure5_RDA_mesofauna.pdf"), width=7, height=7)
 par(mar=c(4, 4, 1, 1))
