@@ -259,7 +259,7 @@ crabstay          <- crabstay[-c(3, 16, 19, 47), ]       # remove incomplete rec
 c1                <- merge(crabstay, dat1, by.x="bucket",
                            by.y="Overall.bucket", all.x=T, sort=F)
 c1$changebiomass  <- c1$weightfin - c1$weight
-c1$pbio           <- (c1$weightfin - c1$weight) / c1$weight  # proportional change
+c1$pbio           <- 100 * (c1$weightfin - c1$weight) / c1$weight  # % growth
 names(c1)[1]      <- "Overall.bucket"
 
 # --- Dry:wet conversion factors ---
@@ -777,7 +777,7 @@ for (i in 12:16) {
     xl   <- c("No", "Yes")
     if (j == 7) { xl <- c("No","Yes","Grnd"); xll <- c(.5,3.5)
                   space <- c(1:3); cl <- c("white","gray80","gray45") }
-    if (i == 12) { y <- c(0, 10);  ysig <- 9 }
+    if (i == 12) { y <- c(0, 200); ysig <- 185 }
     if (i == 13) { y <- c(0, .5);  ysig <- .45 }
     if (i == 14) { y <- c(0, 5);   ysig <- 4.5 }
     if (i == 16) { y <- c(0, 2);   ysig <- 1.7 }
@@ -798,7 +798,7 @@ for (i in 12:16) {
                        abline(-1, 0) } else axis(1, labels=F, tck=0)
         q <- tapply(resp, list(fac1), mean, na.rm=T)
         points(space, as.vector(q), pch=1, col='black', cex=1.2)
-        if (j==7 & i==12) text(c(1,2,3), ysig, labels=c("a","b","a"))
+        if (j==5 & i==12) points(1.5, ysig, pch=8, col='black', cex=1.2)
         if (j==6 & i==13) points(1.5, ysig, pch=8, col='black', cex=1.2)
         if (j==5 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2)
       }
@@ -811,7 +811,7 @@ for (i in 12:16) {
     }
   }
 }
-mtext(expression(paste("% crab growth (g)")), 2, las=0, line=2.5, cex=.8, at=.91, outer=T)
+mtext("% crab growth",                         2, las=0, line=2.5, cex=.8, at=.91, outer=T)
 mtext(expression(paste("Amphipods (g)")),      2, las=0, line=2.5, cex=.8, at=.7,  outer=T)
 mtext(expression(paste("Ulva (g)")),           2, las=0, line=2.5, cex=.8, at=.5,  outer=T)
 mtext(expression(paste("Kelp (g)")),           2, las=0, line=2.5, cex=.8, at=.3,  outer=T)
