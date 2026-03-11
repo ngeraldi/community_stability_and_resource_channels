@@ -592,11 +592,17 @@ Anova(m_gppvar)
 # Subset to final time point for cross-sectional analyses
 t4   <- na.omit(ps_full[ps_full$Time == 4, ])
 cc4  <- t4[, 9:18]
-var4 <- t4[, c(4, 20:26)]
+# Note: Crab, Pods, Ulva, Kelp were excluded from ps_full during ps_main2
+# construction (ps_main[,-c(19:24)]). Re-attach from dat1 using bucket key.
+t4_treat <- dat1[match(t4$bucket, dat1$Overall.bucket),
+                 c("Crab", "Pods", "Ulva", "Kelp", "flowpermin")]
+t4_treat$Kelp <- factor(t4_treat$Kelp, levels=c("No", "One piece", "Ground up"))
+var4 <- data.frame(t4_treat, Table=t4$Table.x)
 
-# -- Multivariate community composition: PERMANOVA (adonis) ---
-ad4  <- adonis(log(cc4 + 1) ~ Crab + Pods + Ulva + Kelp + flowpermin,
-               Strata=t4$Table.x, var4)
+# -- Multivariate community composition: PERMANOVA (adonis2) ---
+perm_ctrl <- permute::how(blocks=var4$Table)
+ad4  <- adonis2(log(cc4 + 1) ~ Crab + Pods + Ulva + Kelp + flowpermin,
+                data=var4, permutations=perm_ctrl, by="terms")
 print(ad4)
 
 # -- Multivariate community composition: RDA ---
@@ -605,9 +611,14 @@ vif.cca(mod_rda)
 summary(mod_rda)
 
 # -- Univariate: total abundance at final time point ---
-rr      <- ps_full[ps_full$Time == 4, ]
-rr$resp <- rr$total_abund
-mod_ps  <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr)
+rr        <- ps_full[ps_full$Time == 4, ]
+# Re-attach treatment variables excluded from ps_full (see note above)
+rr_treat  <- dat1[match(rr$bucket, dat1$Overall.bucket),
+                  c("Crab", "Pods", "Ulva", "Kelp")]
+rr_treat$Kelp <- factor(rr_treat$Kelp, levels=c("No", "One piece", "Ground up"))
+rr        <- cbind(rr, rr_treat)
+rr$resp   <- rr$total_abund
+mod_ps    <- lm(resp ~ Crab*Pods*Ulva*Kelp, data=rr)
 bc_ps   <- boxcox(mod_ps, plotit=FALSE)
 mm_ps   <- bc_ps$x[which.max(bc_ps$y)]
 m_psab  <- lmer((resp)^mm_ps ~ Crab + Pods + Ulva + Kelp + flowpermin +
@@ -898,7 +909,10 @@ dev.off()
 # Note: requires mod_rda from Section 7d. If running figures
 # independently, re-run Section 7d first, or uncomment below:
 # t4 <- na.omit(ps_full[ps_full$Time == 4, ]); cc4 <- t4[, 9:18]
-# var4 <- t4[, c(4, 20:26)]
+# t4_treat <- dat1[match(t4$bucket, dat1$Overall.bucket),
+#                  c("Crab","Pods","Ulva","Kelp","flowpermin")]
+# t4_treat$Kelp <- factor(t4_treat$Kelp, levels=c("No","One piece","Ground up"))
+# var4 <- data.frame(t4_treat, Table=t4$Table.x)
 # mod_rda <- rda(log(cc4 + 1) ~ Crab + Pods + Ulva + Kelp + flowpermin, var4)
 
 pdf(file.path(fig_dir, "Figure5_RDA_mesofauna.pdf"), width=7, height=7)
