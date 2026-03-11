@@ -495,8 +495,9 @@ Anova(m_bv)
 
 # -- Crab proportional biomass change: AIC-based model selection ---
 # All crabs present in c1, so predictors are Pods, Ulva, Kelp, flowpermin.
-# Box-Cox lambda from full factorial; then dredge all main effects +
-# two-way interactions, rank by AIC, refit best model with REML.
+# Main effects are always retained (fixed=); only 2-way interactions compete.
+# This is appropriate for a designed factorial experiment: we report all main
+# effects regardless, and test whether any interaction improves fit by AIC.
 c1$resp    <- c1$pbio
 mod_c      <- lm(resp + 1 ~ Pods*Ulva*Kelp, data=c1)
 bc_c       <- boxcox(mod_c, plotit=FALSE)
@@ -505,8 +506,9 @@ mm_c       <- bc_c$x[which.max(bc_c$y)]
 m_crab_global <- lmer((resp)^mm_c ~ (Pods + Ulva + Kelp + flowpermin)^2 +
                         (1 | Table),
                       REML=F, dat=c1, na.action=na.fail)
-crab_aic      <- MuMIn::dredge(m_crab_global, rank="AIC")
-print(crab_aic)                          # full AIC table
+crab_aic      <- MuMIn::dredge(m_crab_global, rank="AIC",
+                               fixed = c("Pods", "Ulva", "Kelp", "flowpermin"))
+print(crab_aic)                          # ranked by AIC; interactions only vary
 
 m_crab <- update(MuMIn::get.models(crab_aic, 1)[[1]], REML=TRUE)  # best model
 summary(m_crab)
