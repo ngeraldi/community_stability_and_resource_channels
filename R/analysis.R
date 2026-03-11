@@ -73,9 +73,11 @@ library(lmerTest)
 library(mvabund)
 library(MuMIn)
 
-# --- Paths (relative to this script's location) ---
-data_dir <- file.path("/Users/nathangeraldi/Dropbox/Documents/Queens/Stability/R/zenodo_upload", "data")
-fig_dir  <- file.path("/Users/nathangeraldi/Dropbox/Documents/Queens/Stability/R/zenodo_upload", "figures")
+# --- Paths (relative to this script's location in R/) ---
+# Assumes working directory is set to the R/ folder (e.g. via setwd() or
+# RStudio's 'Source' button). Data in ../data/, figures saved to ../figures/.
+data_dir <- file.path("..", "data")
+fig_dir  <- file.path("..", "figures")
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 
 
@@ -437,7 +439,16 @@ write.table(varg, file.path(data_dir, "mesofauna_variance.csv"),
 # ============================================================
 # SECTION 7: STATISTICAL ANALYSES
 # ============================================================
-
+#
+# Modelling approach (applied throughout):
+#   - Box-Cox power transformation: lambda (mm_*) estimated via MASS::boxcox()
+#     on a fully-factorial OLS model, then applied to the response in lmer().
+#     The +1 offset before boxcox() ensures positivity when data contain zeros.
+#   - Mixed models (lme4::lmer): fixed effects = treatments + water flow rate;
+#     random effect = (1 | Table) accounting for the 6 spatial blocking tables.
+#   - REML=FALSE when comparing models by AIC; REML=TRUE (default) for final
+#     parameter estimates and inference (car::Anova Type II Wald chi-square).
+#
 # -------------------------------------------------------
 # 7a. Benthic chlorophyll (BenthoTorch: Total Concentration)
 # -------------------------------------------------------
