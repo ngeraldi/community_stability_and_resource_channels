@@ -71,6 +71,7 @@ library(MASS)
 library(plyr)
 library(lmerTest)
 library(mvabund)
+library(MuMIn)
 
 # --- Paths (relative to this script's location) ---
 data_dir <- file.path("/Users/nathangeraldi/Dropbox/Documents/Queens/Stability/R/zenodo_upload", "data")
@@ -481,14 +482,22 @@ Anova(m_bv)
 # 7b. Organism biomass
 # -------------------------------------------------------
 
-# -- Crab proportional biomass change ---
-c1$resp <- c1$pbio
-mod_c   <- lm(resp + 1 ~ Pods*Ulva*Kelp, data=c1)
-bc_c    <- boxcox(mod_c, plotit=FALSE)
-mm_c    <- bc_c$x[which.max(bc_c$y)]
-m_crab  <- lmer((resp)^mm_c ~ Pods + Ulva + Kelp + flowpermin +
-                  (1 | Table),
-                REML=F, dat=c1)
+# -- Crab proportional biomass change: AIC-based model selection ---
+# All crabs present in c1, so predictors are Pods, Ulva, Kelp, flowpermin.
+# Box-Cox lambda from full factorial; then dredge all main effects +
+# two-way interactions, rank by AIC, refit best model with REML.
+c1$resp    <- c1$pbio
+mod_c      <- lm(resp + 1 ~ Pods*Ulva*Kelp, data=c1)
+bc_c       <- boxcox(mod_c, plotit=FALSE)
+mm_c       <- bc_c$x[which.max(bc_c$y)]
+
+m_crab_global <- lmer((resp)^mm_c ~ (Pods + Ulva + Kelp + flowpermin)^2 +
+                        (1 | Table),
+                      REML=F, dat=c1, na.action=na.fail)
+crab_aic      <- MuMIn::dredge(m_crab_global, rank="AIC")
+print(crab_aic)                          # full AIC table
+
+m_crab <- update(MuMIn::get.models(crab_aic, 1)[[1]], REML=TRUE)  # best model
 summary(m_crab)
 Anova(m_crab)
 
