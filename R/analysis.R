@@ -73,8 +73,8 @@ library(lmerTest)
 library(mvabund)
 
 # --- Paths (relative to this script's location) ---
-data_dir <- file.path("..", "data")
-fig_dir  <- file.path("..", "figures")
+data_dir <- file.path("/Users/nathangeraldi/Dropbox/Documents/Queens/Stability/R/zenodo_upload", "data")
+fig_dir  <- file.path("/Users/nathangeraldi/Dropbox/Documents/Queens/Stability/R/zenodo_upload", "figures")
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 
 
@@ -678,7 +678,8 @@ all_fig1 <- cbind(dat1,
 
 pdf(file.path(fig_dir, "Figure1_chl_metabolism.pdf"), width=10, height=12)
 par(mfrow=c(6, 5), mar=c(.3, .5, .2, .5), oma=c(3, 5.5, .5, 0))
-for (i in 15:20) {
+for (i in 12:17) {
+  # cols 12-17 = Chl, ChlVar, NCP, NCPVar, GPP, GPPVar
   for (j in c(6, 5, 4, 7, 8)) {
     y    <- c(0, max(all_fig1[, i], na.rm=T))
     xll  <- c(.5, 2.5); space <- c(1:2); cl <- c("white", "gray45")
@@ -686,32 +687,32 @@ for (i in 15:20) {
     if (j == 7) { xl <- c("No","Yes","Grnd"); xll <- c(.5,3.5)
                   space <- c(1:3); cl <- c("white","gray80","gray45") }
     ysig <- max(y) * 0.95
-    if (i == 16) { y <- c(0, 0.032); ysig <- 0.027 }
-    if (i == 17) { y <- c(0, 20) }
-    if (i == 20) { y <- c(0, 0.051); ysig <- 0.045 }
+    if (i == 13) { y <- c(0, 0.032); ysig <- 0.027 }  # Chl variance
+    if (i == 14) { y <- c(0, 20) }                     # NCP
+    if (i == 17) { y <- c(0, 0.051); ysig <- 0.045 }  # GPP variance
     if (j != 8) {
       resp <- all_fig1[, i]; fac1 <- all_fig1[, j]
       boxplot(resp ~ fac1, outline=F, col=cl, axes=F, at=space,
               xlim=xll, ylim=y, bty='l')
       if (j == 6) axis(2, las=2) else axis(2, labels=F)
-      if (i == 20) { axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
+      if (i == 17) { axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
                      abline(-0.002, 0) } else axis(1, labels=F, tck=0)
       q <- tapply(resp, list(fac1), mean, na.rm=T)
       points(space, as.vector(q), pch=1, col='black', cex=1.2)
       # Significance indicators (p < 0.05 from Section 7)
-      if (j==5 & i==15) points(1.5, ysig, pch=8, col='black', cex=1.2) # amphipod chl
-      if (j==6 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab chl-var
-      if (j==6 & i==17) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab NCP
-      if (j==4 & i==17) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva NCP
-      if (j==6 & i==19) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab GPP
-      if (j==4 & i==19) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva GPP
-      if (j==4 & i==20) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva GPP-var
+      if (j==5 & i==12) points(1.5, ysig, pch=8, col='black', cex=1.2) # amphipod chl
+      if (j==6 & i==13) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab chl-var
+      if (j==6 & i==14) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab NCP
+      if (j==4 & i==14) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva NCP
+      if (j==6 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2) # crab GPP
+      if (j==4 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva GPP
+      if (j==4 & i==17) points(1.5, ysig, pch=8, col='black', cex=1.2) # ulva GPP-var
     } else {
       plot(all_fig1[,j], all_fig1[,i], pch=1, cex=.6, ylab="", xlab="",
            xaxt="n", yaxt="n", bty='l', xlim=c(150,900), ylim=y)
       axis(2, labels=F)
-      if (i == 20) axis(1, las=1, tick=F, padj=-1)
-      if (i %in% c(15,16,17,19)) abline(lm(all_fig1[,i] ~ all_fig1[,j]),
+      if (i == 17) axis(1, las=1, tick=F, padj=-1)
+      if (i %in% c(12,13,14,16)) abline(lm(all_fig1[,i] ~ all_fig1[,j]),
                                          lty=1, lwd=2)
     }
   }
@@ -750,50 +751,52 @@ all_fig2 <- join(all_fig2, ul,    type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, kelp4, type="left", by="Overall.bucket")
 all_fig2 <- join(all_fig2, det4,  type="left", by="Overall.bucket")
 # Set biomass to zero where organism was absent (was NA)
-all_fig2[all_fig2$Crab == "No", 15] <- 0
-all_fig2[all_fig2$Pods == "No", 16] <- 0
-all_fig2[all_fig2$Ulva == "No", 17] <- 0
+# cols 12-16 = changebiomass(crab), podbio, ulva biomass, kelpbio, detbio
+all_fig2[all_fig2$Crab == "No", 12] <- 0
+all_fig2[all_fig2$Pods == "No", 13] <- 0
+all_fig2[all_fig2$Ulva == "No", 14] <- 0
 
 pdf(file.path(fig_dir, "Figure2_biomass_factors.pdf"), width=10, height=10)
 par(mfrow=c(5, 5), mar=c(.3, .5, .2, .5), oma=c(3, 5.5, .5, 0))
-for (i in 15:19) {
+for (i in 12:16) {
+  # cols 12-16 = crab growth, amphipod biomass, Ulva biomass, kelp biomass, detritus
   for (j in c(6, 5, 4, 7, 8)) {
     y    <- c(0, max(all_fig2[, i], na.rm=T))
     xll  <- c(.5, 2.5); space <- c(1:2); cl <- c("white", "gray45")
     xl   <- c("No", "Yes")
     if (j == 7) { xl <- c("No","Yes","Grnd"); xll <- c(.5,3.5)
                   space <- c(1:3); cl <- c("white","gray80","gray45") }
-    if (i == 15) { y <- c(0, 10);  ysig <- 9 }
-    if (i == 16) { y <- c(0, .5);  ysig <- .45 }
-    if (i == 17) { y <- c(0, 5);   ysig <- 4.5 }
-    if (i == 19) { y <- c(0, 2);   ysig <- 1.7 }
+    if (i == 12) { y <- c(0, 10);  ysig <- 9 }
+    if (i == 13) { y <- c(0, .5);  ysig <- .45 }
+    if (i == 14) { y <- c(0, 5);   ysig <- 4.5 }
+    if (i == 16) { y <- c(0, 2);   ysig <- 1.7 }
     # Skip self-reference panels (organism plotted against its own treatment)
-    self_ref <- (i==15 & j==6) | (i==16 & j==5) | (i==17 & j==4) | (i==18 & j==7)
+    self_ref <- (i==12 & j==6) | (i==13 & j==5) | (i==14 & j==4) | (i==15 & j==7)
     if (j != 8) {
       resp <- all_fig2[, i]; fac1 <- all_fig2[, j]
       if (self_ref) {
         plot(NA, xlim=xll, ylim=y, axes=F, xlab="", ylab="")
         if (j == 6) axis(2, las=2) else axis(2, labels=F)
-        if (i == 19) axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
+        if (i == 16) axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
         else axis(1, labels=F, tck=0)
       } else {
         boxplot(resp ~ fac1, outline=F, col=cl, axes=F, at=space,
                 xlim=xll, ylim=y, bty='l')
         if (j == 6) axis(2, las=2) else axis(2, labels=F)
-        if (i == 19) { axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
+        if (i == 16) { axis(1, las=1, at=space, labels=xl, tck=0, padj=-1)
                        abline(-1, 0) } else axis(1, labels=F, tck=0)
         q <- tapply(resp, list(fac1), mean, na.rm=T)
         points(space, as.vector(q), pch=1, col='black', cex=1.2)
-        if (j==7 & i==15) text(c(1,2,3), ysig, labels=c("a","b","a"))
-        if (j==6 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2)
-        if (j==5 & i==19) points(1.5, ysig, pch=8, col='black', cex=1.2)
+        if (j==7 & i==12) text(c(1,2,3), ysig, labels=c("a","b","a"))
+        if (j==6 & i==13) points(1.5, ysig, pch=8, col='black', cex=1.2)
+        if (j==5 & i==16) points(1.5, ysig, pch=8, col='black', cex=1.2)
       }
     } else {
       plot(all_fig2[,j], all_fig2[,i], pch=1, cex=.6, ylab="", xlab="",
            xaxt="n", yaxt="n", bty='l', xlim=c(150,900), ylim=y)
       axis(2, labels=F)
-      if (i == 19) axis(1, las=1, tick=F, padj=-1)
-      if (j==8 & i==17) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)  # Ulva vs flow
+      if (i == 16) axis(1, las=1, tick=F, padj=-1)
+      if (j==8 & i==14) abline(lm(all_fig2[,i] ~ all_fig2[,j]), lty=1, lwd=2)  # Ulva vs flow
     }
   }
 }
