@@ -943,16 +943,25 @@ dev.off()
 # variance, diversity, diversity variance.
 # Columns: Crab, Amphipods, Ulva, Kelp, Water flow.
 
-# Assemble plotting data frame (final time point + variances)
-dat_ps4 <- ps_full[ps_full$Time == 4, ]
-dat_ps4 <- dat_ps4[order(dat_ps4$bucket), ]
-dat3    <- cbind(varg[, 1:11],
-                 dat_ps4[, c(23, 24, 26, 27)],
-                 varg[, 12:15])
+# Assemble plotting data frame (final time point + variances).
+# Match dat_ps4 to varg row order via Overall.bucket to avoid index misalignment.
+dat_ps4 <- ps_full[ps_full$Time == 4, c("bucket", "total_abund", "rich", "diversity")]
+names(dat_ps4)[1] <- "Overall.bucket"
+dat_ps4 <- dat_ps4[match(dat1$Overall.bucket, dat_ps4$Overall.bucket), ]
+
+# Cols 1:11  = treatment variables (from dat1 via varg)
+# Cols 12:17 = response variables interleaved: value then variance for each metric
+dat3 <- data.frame(
+  varg[, 1:11],
+  abund     = dat_ps4$total_abund,   # col 12: abundance at final time point
+  abund_var = varg[, "abund"],        # col 13: temporal variance of abundance
+  rich      = dat_ps4$rich,           # col 14: richness at final time point
+  rich_var  = varg[, "rich"],         # col 15: temporal variance of richness
+  div       = dat_ps4$diversity,      # col 16: Simpson diversity at final time point
+  div_var   = varg[, "div"]           # col 17: temporal variance of diversity
+)
 dat3$Kelp <- factor(dat3$Kelp, levels=c("No","One piece","Ground up"))
-# Reorder columns for plotting
-dat3 <- dat3[, c(1:12, 15, 13, 16, 14, 17)]
-all_fig3 <- dat3
+all_fig3  <- dat3
 
 pdf(file.path(fig_dir, "Figure3_mesofauna_community.pdf"), width=10, height=12)
 par(mfrow=c(6, 5), mar=c(.3, .5, .2, .5), oma=c(3, 5.5, .5, 0))
