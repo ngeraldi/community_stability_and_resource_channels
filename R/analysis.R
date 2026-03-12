@@ -1036,22 +1036,39 @@ dev.off()
 # var4 <- data.frame(t4_treat, Table=t4$Table.x)
 # mod_rda <- rda(log(cc4 + 1) ~ Crab + Pods + Ulva + Kelp + flowpermin, var4)
 
-pdf(file.path(fig_dir, "Figure5_RDA_mesofauna.pdf"), width=7, height=7)
-par(mar=c(4, 4, 1, 1))
-plot(mod_rda, scaling=2, type="n",
-     xlab=paste0("RDA1 (", round(summary(mod_rda)$concont$importance[2,1]*100, 1), "%)"),
-     ylab=paste0("RDA2 (", round(summary(mod_rda)$concont$importance[2,2]*100, 1), "%)"))
-# Points (sites)
-points(mod_rda, display="sites", pch=1, col="gray60", cex=0.8)
-# Species scores
-text(mod_rda, display="species", scaling=2, col="black", cex=0.75)
-# Biplot arrows (constraints)
-text(mod_rda, display="bp", scaling=2, col="#0057A8", cex=0.85, font=2)
-arrows(0, 0,
-       scores(mod_rda, display="bp", scaling=2)[, 1] * 0.85,
-       scores(mod_rda, display="bp", scaling=2)[, 2] * 0.85,
-       length=0.1, col="#0057A8")
-abline(h=0, v=0, lty=3, col="gray80")
+# Build custom biplot arrow labels, matching manuscript wording.
+# Rownames from rda() biplot scores reflect R's factor coding
+# (e.g. "Crab1" for a Yes/No factor, "KelpOne piece" for that level).
+# We rename by partial matching so the figure is robust to minor coding changes.
+bp_sc <- scores(mod_rda, display="bp", scaling=2)
+rnx   <- rownames(bp_sc)
+rnx   <- ifelse(grepl("^Crab",       rnx), "Crab",         rnx)
+rnx   <- ifelse(grepl("^Pods",       rnx), "Amphipods",    rnx)
+rnx   <- ifelse(grepl("^Ulva",       rnx), "Ulva",         rnx)
+rnx   <- ifelse(grepl("One.piece|One piece", rnx), "Kelp intact",  rnx)
+rnx   <- ifelse(grepl("Ground.up|Ground up",  rnx), "Kelp ground", rnx)
+rnx   <- ifelse(grepl("flow",        rnx), "Water supply", rnx)
+
+# Species (column) abundances — used as plotting priority in orditorp()
+stems <- colSums(cc4)
+
+pdf(file.path(fig_dir, "Figure5_RDA_mesofauna.pdf"), width=7, height=10)
+par(mfrow=c(2,1), mar=c(1.5,1.5,1,1), oma=c(2.5,2.5,0,0))
+
+# --- Panel (a): treatment / constraint arrows ---
+plot(mod_rda, dis="sites", type="n", xlim=c(-2,2), ylim=c(-3,3))
+points(mod_rda, display="sites", cex=0.3, col="grey", pch=20)
+text(mod_rda, dis="bp", labels=rnx, col="black", cex=0.85)
+text(-1.8, 2.8, "(a)", cex=1)
+
+# --- Panel (b): species scores ---
+plot(mod_rda, dis="sites", type="n", xlim=c(-.5,.5), ylim=c(-.5,.5))
+points(mod_rda, display="sites", cex=0.3, col="grey", pch=20)
+orditorp(mod_rda, dis="sp", priority=stems, pcol="black", col="black", pch="+")
+text(-0.45, 0.47, "(b)", cex=1)
+
+mtext("RDA 2", outer=TRUE, side=2, line=1, cex=1)
+mtext("RDA 1", outer=TRUE, side=1, line=1, cex=1)
 dev.off()
 
 
