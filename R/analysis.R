@@ -518,11 +518,15 @@ Anova(m_bv)
 # This is appropriate for a designed factorial experiment: we report all main
 # effects regardless, and test whether any interaction improves fit by AIC.
 c1$resp    <- c1$pbio
-mod_c      <- lm(resp + 1 ~ Pods*Ulva*Kelp, data=c1)
+# Some crabs lost weight so resp can be negative; shift to ensure resp_s > 0
+# before Box-Cox (shift = |min| + 1 guarantees minimum value of 1).
+shift_c    <- abs(min(c1$resp, na.rm=TRUE)) + 1
+c1$resp_s  <- c1$resp + shift_c
+mod_c      <- lm(resp_s ~ Pods*Ulva*Kelp, data=c1)
 bc_c       <- boxcox(mod_c, plotit=FALSE)
 mm_c       <- bc_c$x[which.max(bc_c$y)]
 
-m_crab_global <- lmer((resp)^mm_c ~ (Pods + Ulva + Kelp + flowpermin)^2 +
+m_crab_global <- lmer((resp_s)^mm_c ~ (Pods + Ulva + Kelp + flowpermin)^2 +
                         (1 | Table),
                       REML=F, dat=c1, na.action=na.fail)
 crab_aic      <- MuMIn::dredge(m_crab_global, rank="AIC",
