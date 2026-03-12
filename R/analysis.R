@@ -522,13 +522,16 @@ c1$resp    <- c1$pbio
 # before Box-Cox (shift = |min| + 1 guarantees minimum value of 1).
 shift_c    <- abs(min(c1$resp, na.rm=TRUE)) + 1
 c1$resp_s  <- c1$resp + shift_c
-mod_c      <- lm(resp_s ~ Pods*Ulva*Kelp, data=c1)
+# Drop incomplete cases for modelling (na.action=na.fail requires no NAs).
+# c1 is kept intact for Figure 2; c1_mod is the complete-case subset.
+c1_mod     <- na.omit(c1[, c("resp_s", "Pods", "Ulva", "Kelp", "flowpermin", "Table")])
+mod_c      <- lm(resp_s ~ Pods*Ulva*Kelp, data=c1_mod)
 bc_c       <- boxcox(mod_c, plotit=FALSE)
 mm_c       <- bc_c$x[which.max(bc_c$y)]
 
 m_crab_global <- lmer((resp_s)^mm_c ~ (Pods + Ulva + Kelp + flowpermin)^2 +
                         (1 | Table),
-                      REML=F, dat=c1, na.action=na.fail)
+                      REML=F, dat=c1_mod, na.action=na.fail)
 crab_aic      <- MuMIn::dredge(m_crab_global, rank="AIC",
                                fixed = c("Pods", "Ulva", "Kelp", "flowpermin"))
 print(crab_aic)                          # ranked by AIC; interactions only vary
